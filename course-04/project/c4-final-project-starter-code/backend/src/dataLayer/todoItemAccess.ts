@@ -8,8 +8,7 @@ import { TodoItem } from '../models/TodoItem'
 export class TodoItemAccess {
   constructor(
     private readonly docClient: DocumentClient = createDynamoDBClient(),
-    private readonly todoTable = process.env.TODO_TABLE,
-    private readonly todoUserIdIndex = process.env.TODO_USERID_INDEX
+    private readonly todoTable = process.env.TODO_TABLE
   ) {}
 
   async getAllTodos(userId: string): Promise<TodoItem[]> {
@@ -18,7 +17,6 @@ export class TodoItemAccess {
     const result = await this.docClient
       .query({
         TableName: this.todoTable,
-        IndexName: this.todoUserIdIndex,
         KeyConditionExpression: 'userId = :u',
         ExpressionAttributeValues: { ':u': userId }
       })
@@ -28,11 +26,12 @@ export class TodoItemAccess {
     return items as TodoItem[]
   }
 
-  async getTodo(todoId: string): Promise<TodoItem> {
+  async getTodo(userId: string, todoId: string): Promise<TodoItem> {
     const result = await this.docClient
       .get({
         TableName: this.todoTable,
         Key: {
+          userId,
           todoId
         }
       })
@@ -42,6 +41,7 @@ export class TodoItemAccess {
   }
 
   async putTodo(todoItem: TodoItem): Promise<TodoItem> {
+    console.log('todoItem', todoItem)
     await this.docClient
       .put({
         TableName: this.todoTable,
@@ -52,11 +52,11 @@ export class TodoItemAccess {
     return todoItem
   }
 
-  async deleteTodo(todoId: string): Promise<boolean> {
+  async deleteTodo(userId: string, todoId: string): Promise<boolean> {
     await this.docClient
       .delete({
         TableName: this.todoTable,
-        Key: { todoId }
+        Key: { userId, todoId }
       })
       .promise()
     return true
