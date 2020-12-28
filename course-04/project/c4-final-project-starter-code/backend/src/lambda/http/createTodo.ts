@@ -5,7 +5,6 @@ import { createLogger } from '../../utils/logger'
 const logger = createLogger('createTodo')
 
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
-import { getUserId } from '../../auth/utils'
 import { createTodo } from '../../businessLogic/todo'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
@@ -17,8 +16,7 @@ export const handler = middy(
 
     const parsedTodo: CreateTodoRequest = JSON.parse(event.body)
     console.log('event.headers', event.headers)
-    const userId: string = getUserId(event)
-    const createdTodo = await createTodo(parsedTodo, userId)
+    const createdTodo = await createTodo(parsedTodo, event)
 
     return {
       statusCode: 201,

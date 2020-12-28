@@ -4,6 +4,8 @@ import { TodoItem } from '../models/TodoItem'
 import { TodoItemAccess } from '../dataLayer/todoItemAccess'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
+import { getUserId } from '../auth/utils'
+import { APIGatewayProxyEvent } from 'aws-lambda'
 
 const todoItemAccess = new TodoItemAccess()
 const bucketName = process.env.IMAGES_S3_BUCKET
@@ -12,16 +14,17 @@ export async function getAllTodos(userId: string): Promise<TodoItem[]> {
   return todoItemAccess.getAllTodos(userId)
 }
 
-export async function getTodo(todoId: string): Promise<TodoItem> {
-  return todoItemAccess.getTodo(todoId)
+export async function getTodo(todoId: string, event: APIGatewayProxyEvent): Promise<TodoItem> {
+  const userId = getUserId(event);
+  return todoItemAccess.getTodo(userId, todoId)
 }
 
 export async function createTodo(
   createTodoRequest: CreateTodoRequest,
-  userId: string
+  event: APIGatewayProxyEvent
 ): Promise<TodoItem> {
   const itemId = uuid.v4()
-
+  const userId = getUserId(event);
   return await todoItemAccess.putTodo({
     userId: userId,
     todoId: itemId,
@@ -48,6 +51,7 @@ export async function updateImageTodo(
   return await todoItemAccess.putTodo(updatedItem)
 }
 
-export async function deleteTodo(todoId: string): Promise<boolean> {
-  return await todoItemAccess.deleteTodo(todoId)
+export async function deleteTodo(todoId: string, event: APIGatewayProxyEvent): Promise<boolean> {
+  const userId = getUserId(event);
+  return await todoItemAccess.deleteTodo(userId, todoId)
 }

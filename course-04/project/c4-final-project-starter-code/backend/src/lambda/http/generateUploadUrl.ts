@@ -14,7 +14,7 @@ export const handler = middy(
     // TODO:DONE Return a presigned URL to upload a file for a TODO item with the provided id
     logger.info('Getting signed url for s3', event)
     const todoId = event.pathParameters.todoId
-    let item = await getTodo(todoId)
+    let item = await getTodo(todoId, event)
     console.log('item', item)
     if (!item) {
       return {

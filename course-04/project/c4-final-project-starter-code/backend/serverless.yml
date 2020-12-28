@@ -4,6 +4,9 @@ service:
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
+  - serverless-webpack
 
 package:
   individually: true
@@ -18,7 +21,6 @@ provider:
   environment:
     AUTH_0_SECRET_CERT: Auth0Secret-${self:provider.stage}
     TODO_TABLE: Todo-${self:provider.stage}
-    TODO_USERID_INDEX: TodoUserIdIndex
     IMAGES_S3_BUCKET: serverless-todo-images-717495401509-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
 
@@ -48,7 +50,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}/index/${self:provider.environment.TODO_USERID_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
       - Effect: Allow
         Action:
           - s3:GetObject
@@ -165,14 +167,14 @@ custom:
       info:
         version: v1.0.0
         title: TODO API
-        description: Serverless application for list of to
+        description: Serverless application for list of things to do
     models:
       - name: TodoCreateRequest
         contentType: application/json
-        schema: ${file(src/models/create-todo-request.json)}
+        schema: ${file(src/requests/create-todo-request.json)}
       - name: TodoUpdateRequest
         contentType: application/json
-        schema: ${file(src/models/update-todo-request.json)}
+        schema: ${file(src/requests/update-todo-request.json)}
 
 resources:
   Resources:
@@ -186,17 +188,12 @@ resources:
           - AttributeName: todoId
             AttributeType: S
         KeySchema:
-          - AttributeName: todoId
+          - AttributeName: userId
             KeyType: HASH
+          - AttributeName: todoId
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODO_TABLE}
-        GlobalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TODO_USERID_INDEX}
-            KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-            Projection:
-              ProjectionType: ALL
 
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
